@@ -1,0 +1,56 @@
+-- SECOND CHANCE UNIVERSAL | DELTA MOBILE
+-- Reposicionamiento + intento de curación al reaparecer
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local deathCFrame
+local busy = false
+
+local function setupCharacter(character)
+    local humanoid = character:WaitForChild("Humanoid")
+
+    local root = character:WaitForChild("HumanoidRootPart", 10)
+    if not root then return end
+
+    humanoid.Died:Connect(function()
+        if busy then return end
+        busy = true
+
+        deathCFrame = root.CFrame
+
+        task.spawn(function()
+            local newCharacter = player.CharacterAdded:Wait()
+
+            local newHumanoid =
+                newCharacter:WaitForChild("Humanoid", 10)
+
+            local newRoot =
+                newCharacter:WaitForChild("HumanoidRootPart", 10)
+
+            if newHumanoid and newRoot then
+                if deathCFrame then
+                    newCharacter:PivotTo(
+                        deathCFrame + Vector3.new(0, 3, 0)
+                    )
+                end
+
+                newRoot.AssemblyLinearVelocity = Vector3.zero
+                newRoot.AssemblyAngularVelocity = Vector3.zero
+
+                -- Intento de curación local
+                if newHumanoid.Health > 0 then
+                    newHumanoid.Health = newHumanoid.MaxHealth
+                end
+            end
+
+            busy = false
+        end)
+    end)
+end
+
+if player.Character then
+    task.spawn(setupCharacter, player.Character)
+end
+
+player.CharacterAdded:Connect(setupCharacter)
